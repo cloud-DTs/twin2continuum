@@ -26,7 +26,8 @@ function buildGraphForStorage(
   azureCool,
   awsArchive,
   azureArchive,
-  transferCosts
+  transferCosts,
+  options
 ) {
   let graph = {
     AWS_Hot: {
@@ -66,6 +67,36 @@ function buildGraphForStorage(
       edges: {},
     },
   };
+
+  // OnPrem extension: add OnPrem_Hot, OnPrem_Cool, OnPrem_Archive nodes with cost=0
+  // (real on-prem storage cost is added separately via calculateOnPremLayerCost
+  // in calculateCosts; zero in the graph avoids double-counting). Cross-domain
+  // edges carry real transfer costs from data_transfer.js.
+  if (options && options.onpremEnabled) {
+    graph.OnPrem_Hot = {
+      costs: 0,
+      edges: {
+        AWS_Cool: transferCosts.OnPrem_Hot_to_AWS_Cool || 0,
+        Azure_Cool: transferCosts.OnPrem_Hot_to_Azure_Cool || 0,
+        OnPrem_Cool: transferCosts.OnPrem_Hot_to_OnPrem_Cool || 0,
+      },
+    };
+    graph.OnPrem_Cool = {
+      costs: 0,
+      edges: {
+        AWS_Archive: transferCosts.OnPrem_Cool_to_AWS_Archive || 0,
+        Azure_Archive: transferCosts.OnPrem_Cool_to_Azure_Archive || 0,
+        OnPrem_Archive: transferCosts.OnPrem_Cool_to_OnPrem_Archive || 0,
+      },
+    };
+    graph.OnPrem_Archive = { costs: 0, edges: {} };
+
+    graph.AWS_Hot.edges.OnPrem_Cool = transferCosts.AWS_Hot_to_OnPrem_Cool || 0;
+    graph.Azure_Hot.edges.OnPrem_Cool = transferCosts.Azure_Hot_to_OnPrem_Cool || 0;
+    graph.AWS_Cool.edges.OnPrem_Archive = transferCosts.AWS_Cool_to_OnPrem_Archive || 0;
+    graph.Azure_Cool.edges.OnPrem_Archive = transferCosts.Azure_Cool_to_OnPrem_Archive || 0;
+  }
+
   return graph;
 }
 
@@ -74,12 +105,10 @@ function findCheapestStoragePath(graph, startNodes, endNodes) {
   let parents = {};
   let pq = new PriorityQueue();
 
-  // Initialize costs
   for (let node in graph) {
     costs[node] = Infinity;
   }
 
-  // Start from both hot storage nodes
   for (let startNode of startNodes) {
     costs[startNode] = graph[startNode].costs;
     pq.enqueue(startNode, costs[startNode]);
@@ -88,9 +117,8 @@ function findCheapestStoragePath(graph, startNodes, endNodes) {
   while (!pq.isEmpty()) {
     let { node, cost } = pq.dequeue();
 
-    if (cost > costs[node]) continue; // Ignore outdated paths
-
-    if (!graph[node] || !graph[node].edges) continue; // Safety check
+    if (cost > costs[node]) continue;
+    if (!graph[node] || !graph[node].edges) continue;
 
     for (let neighbor in graph[node].edges) {
       let edgeCost = graph[node].edges[neighbor] || 0;
@@ -104,13 +132,11 @@ function findCheapestStoragePath(graph, startNodes, endNodes) {
     }
   }
 
-  // Find the cheapest path to any archive node
   let target = endNodes.reduce(
     (cheapest, node) => (costs[node] < costs[cheapest] ? node : cheapest),
     endNodes[0]
   );
 
-  // Reconstruct the path
   let cheapestPath = [];
   let currentNode = target;
   while (currentNode) {

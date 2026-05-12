@@ -214,51 +214,8 @@ input[type="range"]:hover::-moz-range-thumb {
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   width: 320px;
-  height: 220px;
   text-align: center;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  padding: 10px;
-}
-
-/* Flip Effect */
-.cost-card.flipped {
-  transform: rotateY(180deg);
-}
-
-/* Front and Back Faces */
-.card-front,
-.card-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  border-radius: 12px;
-  box-sizing: border-box;
-}
-
-/* Front Side */
-.card-front {
-  background: white;
-  color: #333;
-  z-index: 2;
-}
-
-/* Back Side */
-.card-back {
-  background: #bfeaff;
-  color: white;
-  transform: rotateY(180deg);
+  padding: 16px 10px;
 }
 
 /* Title Styling */
@@ -268,10 +225,6 @@ input[type="range"]:hover::-moz-range-thumb {
   color: #007bff;
 }
 
-.card-back h3 {
-  color: #333;
-}
-
 /* Paragraph Styling */
 .cost-card p {
   font-size: 20px;
@@ -279,29 +232,11 @@ input[type="range"]:hover::-moz-range-thumb {
   color: #333;
 }
 
-.card-back p {
-  font-size: 20px;
-}
-
 /* Total Cost Styling */
 .total-cost {
   font-weight: bold;
   color: #28a745;
   font-size: 20px;
-}
-
-/* Info Icon Styling */
-.info-icon {
-  font-size: 18px;
-  margin-left: 8px;
-  cursor: pointer;
-  color: #007bff;
-  transition: transform 0.2s ease-in-out;
-}
-
-/* Info Icon Hover Effect */
-.info-icon:hover {
-  transform: scale(1.2);
 }
 
 /* Hover Effect for Cards */
@@ -435,4 +370,128 @@ output {
 .arrow {
   font-size: 18px;
   color: #555;
+}
+
+/* === OnPrem section === */
+
+.onprem-toggle {
+  margin: 20px 0 10px 0;
+  padding: 10px;
+  background: #f4f7fb;
+  border-radius: 6px;
+}
+.onprem-toggle input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.onprem-toggle label {
+  display: inline;
+  font-weight: normal;
+}
+
+.onprem-section {
+  display: none;
+  border: 1px solid #ccd6e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #fafcff;
+}
+.onprem-section h3 {
+  margin-top: 0;
+  color: #2c5282;
+}
+.onprem-section h4 {
+  margin: 8px 0;
+  color: #2c5282;
+  font-size: 14px;
+}
+
+.onprem-globals {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 2fr;
+  gap: 6px 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.onprem-globals label {
+  font-weight: normal;
+  margin: 0;
+}
+.onprem-globals input,
+.onprem-globals select {
+  margin: 0;
+  padding: 4px 6px;
+}
+.onprem-globals .slider-container {
+  margin: 0;
+}
+
+.onprem-cards-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.onprem-cards-controls button {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.onprem-error {
+  color: #b00020;
+  font-size: 12px;
+  flex-basis: 100%;
+}
+
+.onprem-server-card {
+  border: 1px solid #d0d8e0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: white;
+}
+.onprem-service-hint {
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+.onprem-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 12px;
+}
+.onprem-card-grid label {
+  font-size: 12px;
+  font-weight: normal;
+  margin: 0;
+}
+.onprem-card-grid input {
+  width: 100%;
+  margin: 2px 0 0 0;
+  padding: 3px 6px;
+  font-size: 13px;
+}
+
+/* Result rendering for on-prem */
+.path-segment-onprem {
+  background: #2c7a4b;
+}
+.total-cost-onprem {
+  color: #2c7a4b;
+  font-weight: bold;
+}
+.total-summary {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #eef4f9;
+  border-radius: 5px;
+  font-size: 14px;
+}
+.onprem-breakdown {
+  color: #2c7a4b;
+  font-weight: normal;
+  font-size: 13px;
 }

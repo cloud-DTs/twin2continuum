@@ -38,12 +38,6 @@ function calculateTransferCostFromAWSToInternet(dataSizeInGB) {
 
   return totalCost;
 }
-/**
- * This function calculates the transfer fee from the Azure network to the public internet.
- * @param {number} dataSizeInGB
- * @returns transfer fee to transfer from azure network to internet
- */
-
 function calculateTransferCostFromAzureToInternet(dataSizeInGB) {
   const transferPricing = pricing.azure.transfer.pricing_tiers;
   let remainingData = dataSizeInGB;
@@ -112,12 +106,15 @@ function calculateTransferCostFromAWSHotToAzureCool(dataSizeInGB) {
 }
 
 function calculateTransferCostsFromAzureHotToAWSCool(dataSizeInGB) {
-  const transferCostFromCosmosDBToS3 =
-    pricing.aws.s3InfrequentAccess.transferCostFromCosmosDB;
-  return (
-    dataSizeInGB * transferCostFromCosmosDBToS3 +
-    calculateTransferCostFromAzureToInternet(dataSizeInGB)
-  );
+  // Cosmos → AWS S3 is a cross-cloud move and doesn't use Azure-internal data
+  // movement tooling (ADF / Synapse / change-feed pipelines), so the Cosmos→
+  // Azure-Blob service fee does NOT apply here. Cosmos read RUs are already
+  // captured in calculateCosmosDBCost. The only additional cost on the wire is
+  // standard Azure-to-internet egress. Symmetric with the AWS_Hot → Azure_Cool
+  // direction, which charges only AWS egress (no DynamoDB-export surcharge).
+  // (Updated for SoSyM extension to reflect current Azure billing; conference
+  // paper used the old additive formula.)
+  return calculateTransferCostFromAzureToInternet(dataSizeInGB);
 }
 
 function calculateTransferCostFromAzureHotToAzureCool(dataSizeInGB) {
@@ -144,4 +141,72 @@ function calculateTransferCostFromAzureCoolToAWSArchive(dataSizeInGB) {
 
 function calculateTransferCostFromAzureCoolToAzureArchive(dataSizeInGB) {
   return 0;
+}
+
+/* ===== OnPrem transfer edges =====
+   Conventions:
+   - On-prem outbound (OP → cloud) = 0: we don't model the operator's ISP egress as a per-GB charge;
+     it's bundled into infrastructure CapEx/OpEx in the OnPrem cost model.
+   - Cloud → on-prem = standard cloud egress (AWS or Azure to "internet"; on-prem ingress is free).
+   - Intra-OnPrem (OP → OP) = 0 (LAN). */
+
+/* L1 → L2-Hot OnPrem variants */
+function calculateTransferCostFromL2AWSToOnPremHot(dataSizeInGB) {
+  return calculateTransferCostFromAWSToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromL2AzureToOnPremHot(dataSizeInGB) {
+  return calculateTransferCostFromAzureToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromL2OnPremToAWSHot(dataSizeInGB) {
+  return 0;
+}
+function calculateTransferCostFromL2OnPremToAzureHot(dataSizeInGB) {
+  return 0;
+}
+function calculateTransferCostFromL2OnPremToOnPremHot(dataSizeInGB) {
+  return 0;
+}
+
+/* Hot → Cool OnPrem variants */
+function calculateTransferCostFromAWSHotToOnPremCool(dataSizeInGB) {
+  return calculateTransferCostFromAWSToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromAzureHotToOnPremCool(dataSizeInGB) {
+  return calculateTransferCostFromAzureToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromOnPremHotToAWSCool(dataSizeInGB) {
+  return 0;
+}
+function calculateTransferCostFromOnPremHotToAzureCool(dataSizeInGB) {
+  return 0;
+}
+function calculateTransferCostFromOnPremHotToOnPremCool(dataSizeInGB) {
+  return 0;
+}
+
+/* Cool → Archive OnPrem variants */
+function calculateTransferCostFromAWSCoolToOnPremArchive(dataSizeInGB) {
+  return calculateTransferCostFromAWSToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromAzureCoolToOnPremArchive(dataSizeInGB) {
+  return calculateTransferCostFromAzureToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromOnPremCoolToAWSArchive(dataSizeInGB) {
+  return 0;
+}
+function calculateTransferCostFromOnPremCoolToAzureArchive(dataSizeInGB) {
+  return 0;
+}
+function calculateTransferCostFromOnPremCoolToOnPremArchive(dataSizeInGB) {
+  return 0;
+}
+
+/* L3 → L4 transfer (Lambda/Functions/OnPrem-processor → TwinMaker/DigitalTwins/OnPrem-DT-mgr).
+   Same-provider = 0, cross-cloud = source-cloud egress, OnPrem-touching = 0
+   (consistent with the rest of the OnPrem convention). */
+function calculateTransferCostFromL3AWSToL4Azure(dataSizeInGB) {
+  return calculateTransferCostFromAWSToInternet(dataSizeInGB);
+}
+function calculateTransferCostFromL3AzureToL4AWS(dataSizeInGB) {
+  return calculateTransferCostFromAzureToInternet(dataSizeInGB);
 }

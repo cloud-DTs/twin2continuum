@@ -14,6 +14,7 @@
     <script src="./layer_data_storage.js"></script>
     <script src="./layer_twin_management.js"></script>
     <script src="./layer_data_visualization.js"></script>
+    <script src="./layer_onprem.js"></script>
     <script src="./cost_calculation.js"></script>
     <script src="./provider_decision.js"></script>
   </head>
@@ -40,6 +41,12 @@
           onclick="fillScenario(30000, 0.1, 0.8, 3, 12, 24, 'yes' , 1200, 100, 300, 120, 8)"
         >
           Preset 3 (Smart Large Building)
+        </button>
+        <button onclick="fillScenarioHybridSiemens()">
+          Preset 4 (Hybrid Siemens)
+        </button>
+        <button onclick="fillScenarioCheckWatt()">
+          Preset 5 (Federated CheckWatt)
         </button>
       </div>
       <br />
@@ -177,6 +184,65 @@
           min="0"
           placeholder="Enter number of viewers"
         />
+      </div>
+
+      <!-- On-prem / hybrid deployment section -->
+      <div class="onprem-toggle">
+        <input
+          type="checkbox"
+          id="onpremEnabled"
+          onclick="toggleOnPremSection()"
+        />
+        <label for="onpremEnabled"><strong>Include on-prem / edge deployment</strong></label>
+      </div>
+
+      <div id="onpremSection" class="onprem-section">
+        <h3>On-prem deployment configuration</h3>
+
+        <div class="onprem-globals">
+          <label for="opDepreciationMethod">Depreciation method:</label>
+          <select id="opDepreciationMethod">
+            <option value="linear" selected>Linear (audit-friendly, IAS 16)</option>
+            <option value="exponential">Exponential (Cottier economic decline)</option>
+          </select>
+
+          <label for="opLifetimeMonths">Default lifetime (months):</label>
+          <input type="number" id="opLifetimeMonths" value="60" min="1" />
+
+          <label for="opRateOomPerMonth">Exponential rate (OOM/month):</label>
+          <input type="number" id="opRateOomPerMonth" value="0.01167" step="0.001" />
+
+          <label for="opCostPerPmEur">Cost per person-month (€/PM):</label>
+          <input type="number" id="opCostPerPmEur" value="8000" min="0" step="100" />
+
+          <label for="opElectricityRate">Electricity rate (€/kWh):</label>
+          <input type="number" id="opElectricityRate" value="0.28" min="0" step="0.01" />
+
+          <label for="opDefaultPue">Default PUE:</label>
+          <input type="number" id="opDefaultPue" value="1.5" min="1" step="0.1" />
+
+          <label for="opAnalyzedFraction">Analyzed fraction (data through Hot):</label>
+          <div class="slider-container">
+            <input
+              type="range"
+              id="opAnalyzedFraction"
+              min="0"
+              max="1"
+              step="0.05"
+              value="1"
+              oninput="updateSliderStyle(this)"
+            />
+            <span class="slider-value">1</span>
+          </div>
+        </div>
+
+        <div class="onprem-cards-controls">
+          <button type="button" id="addServerBtn" onclick="addServerCard()">+ Add server (Layer 1)</button>
+          <button type="button" id="removeLastServerBtn" onclick="removeLastServerCard()" disabled>Remove last server</button>
+          <span id="onpremPlacementError" class="onprem-error"></span>
+        </div>
+
+        <div id="onpremServerCards"></div>
       </div>
 
       <button onclick="calculateCosts()">Calculate Cost</button>
