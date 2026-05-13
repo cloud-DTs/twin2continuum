@@ -11,6 +11,8 @@ async function loadPricingData() {
   }
 }
 
+document.addEventListener("DOMContentLoaded", loadPricingData);
+
 // Read OnPrem UI inputs into an in-memory config matching the pricing.json `onprem` shape.
 // Returns null when the OnPrem checkbox is unchecked or absent — guarantees the
 // existing cloud-only behaviour is unchanged when OnPrem mode is off.

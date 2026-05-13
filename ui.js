@@ -301,7 +301,7 @@ function applyOnpremPreset(layerKeys, globals, perLayerOverrides) {
 // visualization in cloud (lets the dashboard live wherever it's cheapest).
 function fillScenarioHybridSiemens() {
   fillScenario(
-    /* devices */ 200,
+    /* devices */ 100,
     /* interval (min) */ 1,
     /* msg size (KB) */ 0.5,
     /* hot months */ 3,
@@ -327,15 +327,16 @@ function fillScenarioHybridSiemens() {
       costPerPmEur: 8000,
       electricityRate: 0.28,
       defaultPue: 1.5,
-      analyzedFraction: 1.0,
+      analyzedFraction: parseFloat((1 / 15).toFixed(4)),
     },
-    {} // per-layer defaults from pricing.json are fine
+    {}
   );
 }
 
-// Federated CheckWatt aggregator: every layer on-prem; L1 represents per-household
-// edge gateways (so N_infra is high). Rough numbers — partner-specific values will
-// refine these (see CLAUDE.md §H).
+// CheckWatt aggregator: hardware-edge-only — only L1 on-prem (CM10+Acuvim per
+// household); all downstream layers cloud-optimized. Electricity externalized to
+// householder so c_pwr = 0 for the operator. SIM data plan (€3/unit/month)
+// folded into maintenance_eur_per_month.
 function fillScenarioCheckWatt() {
   fillScenario(
     /* devices */ 5000,
@@ -352,21 +353,29 @@ function fillScenarioCheckWatt() {
     /* dashboardActiveHours */ 4
   );
   applyOnpremPreset(
-    ["data_acquisition", "data_storage_hot", "data_storage_cold", "data_storage_archive", "data_processing", "dt_management", "visualization"],
+    ["data_acquisition"],
     {
       method: "linear",
-      lifetimeMonths: 60,
+      lifetimeMonths: 84,
       rateOomPerMonth: 0.01167,
-      costPerPmEur: 6000,        // Sweden labor closer to €6k/PM
-      electricityRate: 0.32,     // higher Swedish industrial rate
-      defaultPue: 1.3,
+      costPerPmEur: 6000,
+      electricityRate: 0,
+      defaultPue: 1.0,
       analyzedFraction: 1.0,
     },
     {
       data_acquisition: {
-        n_infra: 100,            // 100 household edge gateways
-        avg_usage: 0.5,
-        t_per_unit_pm: 0.005,    // tiny per-gateway maintenance
+        n_infra: 5000,
+        avg_usage: 1.0,
+        t_baseline_pm: 1.5,
+        t_per_unit_pm: 0.0005,
+        k_acq_eur: 250,
+        salvage_eur_per_unit: 0,
+        lifetime_months: 84,
+        power_w: 8,
+        pue: 1.0,
+        maintenance_eur_per_month: 3,
+        license_eur_per_month: 0,
       },
     }
   );
