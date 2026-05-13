@@ -269,32 +269,20 @@ async function calculateCosts() {
     archiveStorageDurationInMonths
   );
 
-  let awsResultLayer4 = null;
-  let azureResultLayer4 = null;
-  if (needs3DModel === "yes") {
-    awsResultLayer4 = calculateAWSIoTTwinMakerCost(
-      entityCount,
-      numberOfDevices,
-      deviceSendingIntervalInMinutes, 
-      dashboardRefreshesPerHour, 
-      dashboardActiveHoursPerDay
-    );
-  } else if (needs3DModel === "no") {
-    azureResultLayer4 = calculateAzureDigitalTwinsCost(
-      numberOfDevices,
-      deviceSendingIntervalInMinutes, 
-      averageSizeOfMessageInKb,
-      dashboardRefreshesPerHour,
-      dashboardActiveHoursPerDay
-    );
-    awsResultLayer4 = calculateAWSIoTTwinMakerCost(
-        entityCount,
-        numberOfDevices,
-        deviceSendingIntervalInMinutes,
-        dashboardRefreshesPerHour,
-        dashboardActiveHoursPerDay
-    );
-  }
+  const awsResultLayer4 = calculateAWSIoTTwinMakerCost(
+    entityCount,
+    numberOfDevices,
+    deviceSendingIntervalInMinutes,
+    dashboardRefreshesPerHour,
+    dashboardActiveHoursPerDay
+  );
+  const azureResultLayer4 = calculateAzureDigitalTwinsCost(
+    numberOfDevices,
+    deviceSendingIntervalInMinutes,
+    averageSizeOfMessageInKb,
+    dashboardRefreshesPerHour,
+    dashboardActiveHoursPerDay
+  );
 
   const awsResultLayer5 = calculateAmazonManagedGrafanaCost(
     amountOfActiveEditors,
@@ -490,7 +478,7 @@ async function calculateCosts() {
   let cheaperProviderLayer4 = "";
   if (onpremPinned.dt_management) {
     cheaperProviderLayer4 = "L4_OnPrem";
-  } else if (azureResultLayer4) {
+  } else if (needs3DModel === "no") {
     cheaperProviderLayer4 = azureResultLayer4.totalMonthlyCost < awsResultLayer4.totalMonthlyCost ? "L4_Azure" : "L4_AWS";
   } else {
     cheaperProviderLayer4 = "L4_AWS";
@@ -521,11 +509,7 @@ async function calculateCosts() {
   };
   const l1ChosenCost = pickedCloud(cheaperProviderForLayer1, awsResultDataAcquisition.totalMonthlyCost, azureResultDataAcquisition.totalMonthlyCost);
   const l3ChosenCost = pickedCloud(cheaperProviderForLayer3, awsResultDataProcessing.totalMonthlyCost, azureResultDataProcessing.totalMonthlyCost);
-  const l4ChosenCost = pickedCloud(
-    cheaperProviderLayer4,
-    awsResultLayer4 ? awsResultLayer4.totalMonthlyCost : 0,
-    azureResultLayer4 ? azureResultLayer4.totalMonthlyCost : 0
-  );
+  const l4ChosenCost = pickedCloud(cheaperProviderLayer4, awsResultLayer4.totalMonthlyCost, azureResultLayer4.totalMonthlyCost);
   const l5ChosenCost = pickedCloud(cheaperProviderLayer5, awsResultLayer5.totalMonthlyCost, azureResultLayer5.totalMonthlyCost);
   let onpremTotal = 0;
   for (const k of Object.keys(onpremCosts)) onpremTotal += onpremCosts[k].totalMonthlyCost;
@@ -571,7 +555,7 @@ async function calculateCosts() {
     "L2 Cool Storage":         { AWS: fmt(awsResultCool.totalMonthlyCost),             Azure: fmt(azureResultLayer3Cool.totalMonthlyCost) },
     "L2 Archive Storage":      { AWS: fmt(awsResultLayer3Archive.totalMonthlyCost),    Azure: fmt(azureResultLayer3Archive.totalMonthlyCost) },
     "L3 Data Processing":      { AWS: fmt(awsResultDataProcessing.totalMonthlyCost),   Azure: fmt(azureResultDataProcessing.totalMonthlyCost) },
-    "L4 Twin Management":      { AWS: fmt(awsResultLayer4 ? awsResultLayer4.totalMonthlyCost : 0), Azure: fmt(azureResultLayer4 ? azureResultLayer4.totalMonthlyCost : 0) },
+    "L4 Twin Management":      { AWS: fmt(awsResultLayer4.totalMonthlyCost), Azure: fmt(azureResultLayer4.totalMonthlyCost) },
     "L5 Visualization":        { AWS: fmt(awsResultLayer5.totalMonthlyCost),           Azure: fmt(azureResultLayer5.totalMonthlyCost) },
   });
   console.groupEnd();
@@ -604,6 +588,32 @@ async function calculateCosts() {
   console.log("L4:", cheaperProviderLayer4,    "→ €", fmt(l4ChosenCost));
   console.log("L5:", cheaperProviderLayer5,    "→ €", fmt(l5ChosenCost));
   if (onpremConfig) console.log("OnPrem actual sum: €", fmt(onpremTotal));
+  console.groupEnd();
+
+  const awsOnlyStorage = awsResultHot.totalMonthlyCost
+    + transferCosts.AWS_Hot_to_AWS_Cool
+    + awsResultCool.totalMonthlyCost
+    + awsResultLayer3Archive.totalMonthlyCost;
+  const azureOnlyStorage = azureResultHot.totalMonthlyCost
+    + transferCosts.Azure_Hot_to_Azure_Cool
+    + azureResultLayer3Cool.totalMonthlyCost
+    + azureResultLayer3Archive.totalMonthlyCost;
+  const awsOnlyTotal = awsResultDataAcquisition.totalMonthlyCost
+    + awsOnlyStorage
+    + awsResultDataProcessing.totalMonthlyCost
+    + (awsResultLayer4 ? awsResultLayer4.totalMonthlyCost : 0)
+    + awsResultLayer5.totalMonthlyCost;
+  const azureOnlyTotal = azureResultDataAcquisition.totalMonthlyCost
+    + azureOnlyStorage
+    + azureResultDataProcessing.totalMonthlyCost
+    + azureResultLayer4.totalMonthlyCost
+    + azureResultLayer5.totalMonthlyCost;
+  console.group("Single-cloud vs. optimized (€/month)");
+  console.table({
+    "All-AWS":   { total: fmt(awsOnlyTotal) },
+    "All-Azure": { total: fmt(azureOnlyTotal) },
+    "Optimized": { total: fmt(totalDeploymentCost) },
+  });
   console.groupEnd();
 
   console.log(
@@ -694,22 +704,14 @@ async function calculateCosts() {
 
     <div class="cost-card">
         <h3>Layer 4: Twin Management</h3>
-        ${
-          awsResultLayer4
-            ? `<p><strong>AWS:</strong> <span class="total-cost">$${awsResultLayer4.totalMonthlyCost.toLocaleString(
-                "en-US",
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-              )}</span></p>`
-            : ""
-        }
-        ${
-          azureResultLayer4
-            ? `<p><strong>Azure:</strong> <span class="total-cost">$${azureResultLayer4.totalMonthlyCost.toLocaleString(
-                "en-US",
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-              )}</span></p>`
-            : ""
-        }
+        <p><strong>AWS:</strong> <span class="total-cost">$${awsResultLayer4.totalMonthlyCost.toLocaleString(
+          "en-US",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+        )}</span></p>
+        ${needs3DModel === "no" ? `<p><strong>Azure:</strong> <span class="total-cost">$${azureResultLayer4.totalMonthlyCost.toLocaleString(
+          "en-US",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+        )}</span></p>` : ""}
         ${opRow("dt_management")}
     </div>
 

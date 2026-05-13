@@ -106,14 +106,6 @@ function calculateTransferCostFromAWSHotToAzureCool(dataSizeInGB) {
 }
 
 function calculateTransferCostsFromAzureHotToAWSCool(dataSizeInGB) {
-  // Cosmos → AWS S3 is a cross-cloud move and doesn't use Azure-internal data
-  // movement tooling (ADF / Synapse / change-feed pipelines), so the Cosmos→
-  // Azure-Blob service fee does NOT apply here. Cosmos read RUs are already
-  // captured in calculateCosmosDBCost. The only additional cost on the wire is
-  // standard Azure-to-internet egress. Symmetric with the AWS_Hot → Azure_Cool
-  // direction, which charges only AWS egress (no DynamoDB-export surcharge).
-  // (Updated for SoSyM extension to reflect current Azure billing; conference
-  // paper used the old additive formula.)
   return calculateTransferCostFromAzureToInternet(dataSizeInGB);
 }
 
