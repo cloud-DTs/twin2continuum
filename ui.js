@@ -40,6 +40,15 @@ function fillScenario(
   dashboardRefreshesPerHour, 
   dashboardActiveHoursPerDay
 ) {
+  const cb = document.getElementById("onpremEnabled");
+  if (cb && cb.checked) {
+    cb.checked = false;
+    toggleOnPremSection();
+    const container = document.getElementById("onpremServerCards");
+    if (container) container.innerHTML = "";
+    refreshAddButton();
+  }
+
   document.getElementById("devices").value = devices;
   document.getElementById("interval").value = interval;
   document.getElementById("messageSize").value = messageSize;
