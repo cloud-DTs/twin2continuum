@@ -339,12 +339,12 @@ function fillScenarioHybridSiemens() {
 // folded into maintenance_eur_per_month.
 function fillScenarioCheckWatt() {
   fillScenario(
-    /* devices */ 5000,
+    /* devices */ 11000,
     /* interval (min) */ 5,
     /* msg size (KB) */ 1,
-    /* hot months */ 1,
-    /* cool months */ 6,
-    /* archive months */ 24,
+    /* hot months */ 3,
+    /* cool months */ 36,
+    /* archive months */ 84,
     /* needs3DModel */ "no",
     /* entityCount */ 0,
     /* monthlyEditors */ 2,
@@ -365,16 +365,16 @@ function fillScenarioCheckWatt() {
     },
     {
       data_acquisition: {
-        n_infra: 5000,
+        n_infra: 11000,
         avg_usage: 1.0,
-        t_baseline_pm: 1.5,
-        t_per_unit_pm: 0.0005,
-        k_acq_eur: 600,
+        t_baseline_pm: 0.5,
+        t_per_unit_pm: 0.0,
+        k_acq_eur: 0,
         salvage_eur_per_unit: 0,
         lifetime_months: 84,
         power_w: 8,
         pue: 1.0,
-        maintenance_eur_per_month: 3,
+        maintenance_eur_per_month: 1,
         license_eur_per_month: 0,
       },
     }
