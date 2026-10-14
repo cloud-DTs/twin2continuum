@@ -36,8 +36,7 @@
       "upfrontPrice": 0.0001,
       "requestPrice": 0.00001,
       "dataRetrievalPrice": 0.01,
-      "transferCostFromDynamoDB": 0.1,
-      "transferCostFromCosmosDB": 0.05
+      "transferCostFromDynamoDB": 0.1
     },
     "s3GlacierDeepArchive": {
       "storagePrice": 0.00099,
@@ -88,8 +87,7 @@
       "storagePrice": 0.015,
       "writePrice": 0.00001,
       "readPrice": 0.000001,
-      "dataRetrievalPrice": 0.01,
-      "transferCostFromCosmosDB": 0.05
+      "dataRetrievalPrice": 0.01
     },
     "blobStorageArchive": {
       "storagePrice": 0.00099,

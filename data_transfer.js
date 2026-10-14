@@ -110,11 +110,7 @@ function calculateTransferCostsFromAzureHotToAWSCool(dataSizeInGB) {
 }
 
 function calculateTransferCostFromAzureHotToAzureCool(dataSizeInGB) {
-  const transferCostFromCosmosDBToAzure =
-    pricing.azure.blobStorageCool.transferCostFromCosmosDB;
-  return dataSizeInGB <= 5
-    ? 0
-    : (dataSizeInGB - 5) * transferCostFromCosmosDBToAzure;
+  return 0;
 }
 
 /* Transfer costs between Layer 3 (Cool) and Layer 3 (Archive) */
